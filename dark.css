@@ -1,0 +1,32 @@
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: #1a1d17;
+  --paper-raised: #23261e;
+  --paper-line: #383f2f;
+  --paper-stripe: rgba(89, 183, 136, 0.05);
+  --ink: #e9eae1;
+  --ink-faint: #9aa190;
+
+  --credit: #59b788;
+  --credit-soft: rgba(89, 183, 136, 0.14);
+  --debit: #e08770;
+  --debit-soft: rgba(224, 135, 112, 0.14);
+  --brass: #d9ae5c;
+  --brass-soft: rgba(217, 174, 92, 0.14);
+
+  --brand: #2f6e4c;
+  --brand-hover: #3c8760;
+
+  --focus-ring: #6fb6c4;
+  --danger: #e08770;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='dark'] ::selection {
+  background: var(--brass-soft);
+  color: var(--ink);
+}
