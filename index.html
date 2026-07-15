@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('expenseTracker.theme');
+        var saved = raw ? JSON.parse(raw) : null;
+        var theme =
+          saved === 'dark' || saved === 'light'
+            ? saved
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+
+  <meta name="theme-color" content="#F6F7F1" />
+  <meta
+    name="description"
+    content="Ledger: a vanilla JavaScript expense tracker. Log income and expenses, filter and search your history, and see where your money goes."
+  />
+  <title>Ledger — Expense Tracker</title>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231F5C3F'/><path d='M9 11h14M9 16h14M9 21h9' stroke='%23F6F7F1' stroke-width='2' stroke-linecap='round'/></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/dark.css" />
+</head>
+<body>
+  <noscript>This app needs JavaScript enabled to run — it keeps every entry on your device, with no server involved.</noscript>
+
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="4" y="3" width="24" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="1.6" />
+          <path d="M9 11h14M9 16h14M9 21h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <div class="brand__text">
+          <p class="brand__name">Ledger</p>
+          <p class="brand__tagline">Expense Tracker</p>
+        </div>
+      </div>
+      <button type="button" id="theme-toggle" class="icon-btn icon-btn--large"></button>
+    </header>
+
+    <main class="app-main">
+      <section class="summary" aria-label="Account summary">
+        <div class="summary__stat summary__stat--balance">
+          <p class="summary__label">Balance</p>
+          <p class="summary__amount" id="balance-amount">$0.00</p>
+          <p class="summary__meta" id="summary-as-of">As of —</p>
+        </div>
+        <div class="summary__stat">
+          <p class="summary__label">Income</p>
+          <p class="summary__amount is-credit" id="income-amount">$0.00</p>
+        </div>
+        <div class="summary__stat">
+          <p class="summary__label">Expense</p>
+          <p class="summary__amount is-debit" id="expense-amount">$0.00</p>
+        </div>
+      </section>
+
+      <section class="charts" aria-label="Spending charts">
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <h2>By category</h2>
+            <div class="segmented" id="category-type-toggle" role="group" aria-label="Chart type">
+              <button type="button" data-chart-type="expense" class="segmented__btn is-active" aria-pressed="true">Expense</button>
+              <button type="button" data-chart-type="income" class="segmented__btn" aria-pressed="false">Income</button>
+            </div>
+          </div>
+          <div class="chart-card__body">
+            <div class="chart-card__canvas-wrap">
+              <canvas id="category-chart" role="img" aria-label="Doughnut chart of spending by category"></canvas>
+            </div>
+            <ul class="legend" id="category-legend"></ul>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <h2>Income vs. expense</h2>
+            <p class="chart-card__subtitle">Last 6 months</p>
+          </div>
+          <div class="chart-card__canvas-wrap chart-card__canvas-wrap--bar">
+            <canvas id="trend-chart" role="img" aria-label="Bar chart comparing income and expense by month"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Search and filter transactions">
+        <label class="search-field">
+          <span class="visually-hidden">Search transactions</span>
+          <svg class="search-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <circle cx="8.6" cy="8.6" r="5.3" />
+            <path d="M16 16l-3.3-3.3" />
+          </svg>
+          <input type="search" id="search-input" placeholder="Search entries…" autocomplete="off" />
+        </label>
+
+        <select id="type-filter" aria-label="Filter by type">
+          <option value="all">All types</option>
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+
+        <select id="category-filter" aria-label="Filter by category">
+          <option value="all">All categories</option>
+        </select>
+
+        <select id="date-filter" aria-label="Filter by date">
+          <option value="all">All time</option>
+          <option value="today">Today</option>
+          <option value="week">Last 7 days</option>
+          <option value="month">This month</option>
+          <option value="custom">Custom range</option>
+        </select>
+
+        <div class="custom-date-range" id="custom-date-range" hidden>
+          <input type="date" id="custom-start" aria-label="Start date" />
+          <span aria-hidden="true">–</span>
+          <input type="date" id="custom-end" aria-label="End date" />
+        </div>
+
+        <button type="button" id="clear-filters-btn" class="btn-text" hidden>Clear filters</button>
+
+        <button type="button" id="add-transaction-btn" class="btn-primary">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M10 4v12M4 10h12" />
+          </svg>
+          New entry
+        </button>
+      </section>
+
+      <section class="ledger" aria-label="Transactions">
+        <div class="ledger__header">
+          <h2>Transactions</h2>
+          <p id="results-count" class="ledger__count">0 entries</p>
+        </div>
+        <ul id="transaction-list" class="ledger__list"></ul>
+        <div id="empty-state" class="empty-state" hidden>
+          <p class="empty-state__title" id="empty-state-title">Nothing logged yet</p>
+          <p class="empty-state__body" id="empty-state-body">Add your first income or expense to start your ledger.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>Built with vanilla HTML, CSS &amp; JavaScript — every entry stays on this device.</p>
+    </footer>
+  </div>
+
+  <div class="modal" id="transaction-modal" hidden>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal__header">
+        <h2 id="modal-title">New entry</h2>
+        <button type="button" id="modal-close-btn" class="icon-btn" aria-label="Close dialog">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path d="M5 5l10 10M15 5L5 15" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="transaction-form" novalidate>
+        <div class="field">
+          <label for="description-input">Description</label>
+          <input type="text" id="description-input" name="description" maxlength="100" required />
+          <span class="field-error" id="description-error" role="alert"></span>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="amount-input">Amount</label>
+            <input type="number" id="amount-input" name="amount" min="0.01" step="0.01" inputmode="decimal" required />
+            <span class="field-error" id="amount-error" role="alert"></span>
+          </div>
+
+          <div class="field">
+            <label for="date-input">Date</label>
+            <input type="date" id="date-input" name="date" required />
+            <span class="field-error" id="date-error" role="alert"></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field__legend">Type</span>
+          <div class="segmented segmented--full">
+            <label class="segmented__radio">
+              <input type="radio" name="type" value="expense" checked />
+              <span>Expense</span>
+            </label>
+            <label class="segmented__radio">
+              <input type="radio" name="type" value="income" />
+              <span>Income</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="category-input">Category</label>
+          <select id="category-input" name="category" required></select>
+          <span class="field-error" id="category-error" role="alert"></span>
+        </div>
+
+        <div class="modal__actions">
+          <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="chart-tooltip" id="chart-tooltip" role="tooltip" hidden></div>
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
